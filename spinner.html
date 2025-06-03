@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quiz Spinner Wheel</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #1e1e2f;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    canvas {
+      background: #2f2f3f;
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 25px;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      background: #fec260;
+      color: #1e1e2f;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #ff6b6b;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background-color: rgba(0, 0, 0, 0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 99;
+    }
+
+    .modal-content {
+      background: #2f2f3f;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      position: relative;
+    }
+
+    .modal-content h3 {
+      margin-bottom: 15px;
+    }
+
+    .option {
+      background: #4d96ff;
+      margin: 10px 0;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .option:hover {
+      background: #6bcb77;
+    }
+
+    .feedback {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffef90;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="spinner" width="500" height="500"></canvas>
+  <button onclick="spinWheel()">Spin</button>
+
+  <!-- Modal -->
+  <div id="quizModal" class="modal" onclick="hideModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <h3 id="questionText"></h3>
+      <div id="optionsContainer"></div>
+      <div id="feedback" class="feedback"></div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('spinner');
+    const ctx = canvas.getContext('2d');
+
+    const sectors = ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8'];
+    const colors = ['#FF6B6B', '#FEC260', '#6BCB77', '#4D96FF', '#845EC2', '#FFC75F', '#0081CF', '#FF9671'];
+
+    let angle = 0;
+    let velocity = 0;
+    let isSpinning = false;
+
+    const questions = {
+      Q1: {
+        text: "What is the capital of France?",
+        options: ["Paris", "London", "Rome", "Berlin"],
+        correctAnswer: "Paris"
+      },
+      Q2: {
+        text: "Which planet is known as the Red Planet?",
+        options: ["Mars", "Earth", "Jupiter", "Saturn"],
+        correctAnswer: "Mars"
+      },
+      Q3: {
+        text: "Who wrote Hamlet?",
+        options: ["Shakespeare", "Hemingway", "Tolstoy", "Dickens"],
+        correctAnswer: "Shakespeare"
+      },
+      Q4: {
+        text: "What is the largest ocean on Earth?",
+        options: ["Pacific", "Atlantic", "Indian", "Arctic"],
+        correctAnswer: "Pacific"
+      },
+      Q5: {
+        text: "Which is the fastest land animal?",
+        options: ["Cheetah", "Lion", "Horse", "Gazelle"],
+        correctAnswer: "Cheetah"
+      },
+      Q6: {
+        text: "What is H2O commonly known as?",
+        options: ["Water", "Oxygen", "Hydrogen", "Acid"],
+        correctAnswer: "Water"
+      },
+      Q7: {
+        text: "Which country hosted the 2020 Olympics?",
+        options: ["Japan", "China", "USA", "Brazil"],
+        correctAnswer: "Japan"
+      },
+      Q8: {
+        text: "What is 9 x 9?",
+        options: ["81", "72", "99", "90"],
+        correctAnswer: "81"
+      }
+    };
+
+    function drawWheel() {
+      const len = sectors.length;
+      const arc = (2 * Math.PI) / len;
+
+      ctx.clearRect(0, 0, 500, 500);
+      ctx.save();
+      ctx.translate(250, 250);
+      ctx.rotate(angle);
+
+      for (let i = 0; i < len; i++) {
+        ctx.beginPath();
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, 200, arc * i, arc * (i + 1));
+        ctx.lineTo(0, 0);
+        ctx.fill();
+
+        // Draw text
+        ctx.save();
+        ctx.rotate(arc * i + arc / 2);
+        ctx.translate(120, 0);
+        ctx.rotate(Math.PI / 2);
+        ctx.fillStyle = '#fff';
+        ctx.font = '16px sans-serif';
+        ctx.fillText(sectors[i], -ctx.measureText(sectors[i]).width / 2, 0);
+        ctx.restore();
+      }
+
+      ctx.restore();
+
+      // Draw pointer
+      ctx.beginPath();
+      ctx.moveTo(250, 10);
+      ctx.lineTo(240, 30);
+      ctx.lineTo(260, 30);
+      ctx.closePath();
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+    }
+
+    function spinWheel() {
+      if (isSpinning) return;
+      velocity = Math.random() * 0.3 + 0.25;
+      isSpinning = true;
+      animate();
+    }
+
+    function animate() {
+      if (!isSpinning) return;
+
+      angle += velocity;
+      angle %= 2 * Math.PI;
+      velocity *= 0.985;
+
+      if (velocity < 0.002) {
+        isSpinning = false;
+
+        const arc = (2 * Math.PI) / sectors.length;
+        const normalizedAngle = (2 * Math.PI - angle + arc / 2) % (2 * Math.PI);
+        const index = Math.floor(normalizedAngle / arc);
+        const selected = sectors[index];
+
+        setTimeout(() => {
+          showQuestionModal(selected);
+        }, 300);
+      }
+
+      drawWheel();
+      requestAnimationFrame(animate);
+    }
+
+    function showQuestionModal(questionKey) {
+      const modal = document.getElementById("quizModal");
+      const questionText = document.getElementById("questionText");
+      const optionsContainer = document.getElementById("optionsContainer");
+      const feedback = document.getElementById("feedback");
+
+      const q = questions[questionKey];
+      if (!q) return;
+
+      questionText.textContent = q.text;
+      feedback.textContent = "";
+      optionsContainer.innerHTML = "";
+
+      q.options.forEach(opt => {
+        const div = document.createElement("div");
+        div.className = "option";
+        div.textContent = opt;
+        div.onclick = () => {
+          if (opt === q.correctAnswer) {
+            feedback.textContent = "🎉 Congratulations! Correct Answer.";
+            feedback.style.color = "#90ee90";
+          } else {
+            feedback.textContent = "❌ Better luck next time.";
+            feedback.style.color = "#ff7f7f";
+          }
+
+          // Disable all options
+          Array.from(optionsContainer.children).forEach(child => {
+            child.onclick = null;
+            child.style.opacity = 0.6;
+            child.style.pointerEvents = "none";
+          });
+
+          // Auto close modal after 2.5s
+          setTimeout(() => {
+            modal.style.display = "none";
+          }, 2500);
+        };
+        optionsContainer.appendChild(div);
+      });
+
+      modal.style.display = "flex";
+    }
+
+    function hideModal(e) {
+      const modal = document.getElementById("quizModal");
+      modal.style.display = "none";
+    }
+
+    drawWheel();
+  </script>
+</body>
+</html>
