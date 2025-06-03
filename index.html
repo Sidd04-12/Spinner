@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Spinner Wheel</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #1e1e2f;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .main-heading {
+      font-size: 3.5rem;
+      font-weight: bold;
+      background: linear-gradient(45deg, #ff6b6b, #ffd93d, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-align: center;
+      margin-bottom: 30px;
+      animation: gradient-animation 3s ease-in-out infinite;
+      text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+      letter-spacing: 2px;
+    }
+
+    @keyframes gradient-animation {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .wheel-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: min(90vw, 90vh);
+      aspect-ratio: 1;
+    }
+
+    canvas {
+      background: #2f2f3f;
+      border-radius: 50%;
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+      width: 100%;
+      height: 100%;
+      max-width: 800px;
+      max-height: 800px;
+    }
+
+    button {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px 35px;
+      font-size: 24px;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(135deg, #ff6b6b, #ffd93d);
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      box-shadow: 
+        0 8px 25px rgba(255, 107, 107, 0.4),
+        0 0 0 4px rgba(255, 255, 255, 0.8),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3);
+      z-index: 10;
+      min-width: 120px;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      background: linear-gradient(135deg, #ff5252, #ffeb3b);
+      transform: translate(-50%, -50%) scale(1.05);
+      box-shadow: 
+        0 12px 35px rgba(255, 107, 107, 0.6),
+        0 0 0 6px rgba(255, 255, 255, 0.9),
+        inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    }
+
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: translate(-50%, -50%) scale(1);
+      background: linear-gradient(135deg, #888, #aaa);
+    }
+
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 99;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: #2f2f3f;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+      position: relative;
+    }
+
+    .modal-content h3 {
+      margin-bottom: 20px;
+      font-size: 22px;
+      line-height: 1.4;
+    }
+
+    .option {
+      background: #4d96ff;
+      margin: 12px 0;
+      padding: 15px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .option:hover {
+      background: #6bcb77;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(107, 203, 119, 0.3);
+    }
+
+    .feedback {
+      margin-top: 25px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #ffef90;
+      min-height: 30px;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
+      .main-heading {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        letter-spacing: 1px;
+      }
+      
+      button {
+        font-size: 18px;
+        padding: 15px 25px;
+        min-width: 100px;
+      }
+      
+      .modal-content {
+        padding: 20px;
+        max-width: 90vw;
+      }
+      
+      .modal-content h3 {
+        font-size: 18px;
+      }
+      
+      .option {
+        font-size: 14px;
+        padding: 12px 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .main-heading {
+        font-size: 2rem;
+        margin-bottom: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1 class="main-heading">Bistrack Wheel Of Fortune</h1>
+  
+  <div class="wheel-container">
+    <canvas id="spinner"></canvas>
+    <button id="spinButton" onclick="spinWheel()">SPIN!</button>
+  </div>
+
+  <div id="quizModal" class="modal" onclick="hideModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <h3 id="questionText"></h3>
+      <div id="optionsContainer"></div>
+      <div id="feedback" class="feedback"></div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('spinner');
+    const ctx = canvas.getContext('2d');
+    const spinButton = document.getElementById('spinButton');
+
+    // Create sectors with just numbers
+    const sectors = Array.from({ length: 30 }, (_, i) => `${i + 1}`);
+    // Bright and attractive colors for the wheel
+    const colors = [
+      '#FF1744', '#E91E63', '#9C27B0', '#673AB7', 
+      '#3F51B5', '#2196F3', '#03DAC6', '#00E676',
+      '#76FF03', '#FFEA00', '#FFC107', '#FF9800',
+      '#FF5722', '#F50057', '#AA00FF', '#6200EA',
+      '#3D5AFE', '#00B0FF', '#1DE9B6', '#00E5FF',
+      '#C6FF00', '#FFFF00', '#FFD54F', '#FFAB40',
+      '#FF6E40', '#FF1744', '#E91E63', '#9C27B0'
+    ];
+
+    let angle = 0;
+    let velocity = 0;
+    let isSpinning = false;
+
+    const questions = {
+      1: { text: "Capital of France?", options: ["Paris", "London", "Berlin", "Rome"], correctAnswer: "Paris" },
+      2: { text: "Red Planet?", options: ["Earth", "Mars", "Venus", "Jupiter"], correctAnswer: "Mars" },
+      3: { text: "Author of Hamlet?", options: ["Shakespeare", "Hemingway", "Orwell", "Twain"], correctAnswer: "Shakespeare" },
+      4: { text: "Largest Ocean?", options: ["Indian", "Atlantic", "Pacific", "Arctic"], correctAnswer: "Pacific" },
+      5: { text: "Fastest land animal?", options: ["Lion", "Cheetah", "Leopard", "Tiger"], correctAnswer: "Cheetah" },
+      6: { text: "H2O is?", options: ["Oxygen", "Water", "Hydrogen", "Helium"], correctAnswer: "Water" },
+      7: { text: "2020 Olympics host?", options: ["China", "Japan", "Brazil", "USA"], correctAnswer: "Japan" },
+      8: { text: "9 x 9?", options: ["99", "81", "72", "90"], correctAnswer: "81" },
+      9: { text: "Tallest animal?", options: ["Elephant", "Giraffe", "Horse", "Rhino"], correctAnswer: "Giraffe" },
+      10: { text: "Human body blood volume?", options: ["5L", "3L", "7L", "10L"], correctAnswer: "5L" },
+      11: { text: "First man on Moon?", options: ["Buzz Aldrin", "Yuri Gagarin", "Neil Armstrong", "John Glenn"], correctAnswer: "Neil Armstrong" },
+      12: { text: "Sun rises in?", options: ["North", "East", "South", "West"], correctAnswer: "East" },
+      13: { text: "Which is a mammal?", options: ["Shark", "Dolphin", "Octopus", "Tuna"], correctAnswer: "Dolphin" },
+      14: { text: "Gas plants use?", options: ["O2", "CO2", "H2", "N2"], correctAnswer: "CO2" },
+      15: { text: "Which is a programming language?", options: ["Python", "Snake", "Cobra", "Viper"], correctAnswer: "Python" },
+      16: { text: "HTML stands for?", options: ["Hyper Transfer Markup Language", "Hyper Text Markup Language", "HighText Machine Language", "Hyperloop Machine Language"], correctAnswer: "Hyper Text Markup Language" },
+      17: { text: "5 + 7 = ?", options: ["11", "12", "13", "14"], correctAnswer: "12" },
+      18: { text: "Water freezes at?", options: ["0°C", "10°C", "32°C", "100°C"], correctAnswer: "0°C" },
+      19: { text: "Which is a search engine?", options: ["Facebook", "Google", "Twitter", "Instagram"], correctAnswer: "Google" },
+      20: { text: "What color is the sky?", options: ["Green", "Blue", "Red", "Yellow"], correctAnswer: "Blue" },
+      21: { text: "India's capital?", options: ["Mumbai", "Delhi", "Kolkata", "Chennai"], correctAnswer: "Delhi" },
+      22: { text: "Which is a fruit?", options: ["Tomato", "Potato", "Carrot", "Cucumber"], correctAnswer: "Tomato" },
+      23: { text: "5 x 5 = ?", options: ["10", "15", "20", "25"], correctAnswer: "25" },
+      24: { text: "Which is a prime number?", options: ["4", "6", "11", "9"], correctAnswer: "11" },
+      25: { text: "Who painted Mona Lisa?", options: ["Van Gogh", "Picasso", "Da Vinci", "Michelangelo"], correctAnswer: "Da Vinci" },
+      26: { text: "Human DNA is shaped like?", options: ["Circle", "Double helix", "Triangle", "Square"], correctAnswer: "Double helix" },
+      27: { text: "Which is a planet?", options: ["Moon", "Mars", "Sun", "Asteroid"], correctAnswer: "Mars" },
+      28: { text: "JavaScript is used for?", options: ["Styling", "Logic", "Hosting", "Marketing"], correctAnswer: "Logic" },
+      29: { text: "Which is a web browser?", options: ["Linux", "Windows", "Chrome", "Photoshop"], correctAnswer: "Chrome" },
+      30: { text: "Which is a cloud platform?", options: ["AWS", "MySQL", "Bootstrap", "Word"], correctAnswer: "AWS" }
+    };
+
+    function resizeCanvas() {
+      const container = document.querySelector('.wheel-container');
+      const containerRect = container.getBoundingClientRect();
+      const size = Math.min(containerRect.width, containerRect.height);
+      
+      canvas.width = size;
+      canvas.height = size;
+      
+      drawWheel();
+    }
+
+    function drawWheel() {
+      const len = sectors.length;
+      const arc = (2 * Math.PI) / len;
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = Math.min(centerX, centerY) - 10;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(angle);
+
+      for (let i = 0; i < len; i++) {
+        ctx.beginPath();
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, radius, arc * i, arc * (i + 1));
+        ctx.lineTo(0, 0);
+        ctx.fill();
+
+        // Draw numbers at the edge of the wheel with better contrast
+        ctx.save();
+        ctx.rotate(arc * i + arc / 2);
+        ctx.translate(radius * 0.85, 0); // Position closer to the edge
+        ctx.rotate(Math.PI / 2);
+        
+        // Add text shadow for better readability
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 3;
+        ctx.shadowOffsetX = 1;
+        ctx.shadowOffsetY = 1;
+        
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.max(14, radius * 0.05)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(sectors[i], 0, 0);
+        ctx.restore();
+      }
+
+      ctx.restore();
+
+      // Draw enhanced pointer with glow
+      const pointerSize = radius * 0.12;
+      
+      // Pointer glow effect
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+      ctx.shadowBlur = 10;
+      
+      ctx.beginPath();
+      ctx.moveTo(centerX, pointerSize);
+      ctx.lineTo(centerX - pointerSize/2, 0);
+      ctx.lineTo(centerX + pointerSize/2, 0);
+      ctx.closePath();
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      
+      // Reset shadow
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+
+    function spinWheel() {
+      if (isSpinning) return;
+      
+      velocity = Math.random() * 0.3 + 0.25;
+      isSpinning = true;
+      spinButton.disabled = true;
+      spinButton.textContent = 'Spinning...';
+      animate();
+    }
+
+    function animate() {
+      if (!isSpinning) return;
+
+      angle += velocity;
+      angle %= 2 * Math.PI;
+      velocity *= 0.985;
+
+      drawWheel();
+
+      if (velocity < 0.002) {
+        isSpinning = false;
+        spinButton.disabled = false;
+        spinButton.textContent = 'Spin';
+        
+        const arc = (2 * Math.PI) / sectors.length;
+        const normalizedAngle = (2 * Math.PI - angle + arc / 2) % (2 * Math.PI);
+        const index = Math.floor(normalizedAngle / arc);
+        const selected = parseInt(sectors[index]);
+
+        setTimeout(() => {
+          const q = questions[selected];
+          if (!q) return alert("No question found!");
+
+          document.getElementById("questionText").innerText = `Question ${selected}: ${q.text}`;
+          const optionsContainer = document.getElementById("optionsContainer");
+          const feedback = document.getElementById("feedback");
+          feedback.innerText = '';
+          optionsContainer.innerHTML = '';
+
+          q.options.forEach(option => {
+            const div = document.createElement("div");
+            div.className = "option";
+            div.innerText = option;
+            div.onclick = () => {
+              // Remove click handlers from all options
+              optionsContainer.querySelectorAll('.option').forEach(opt => {
+                opt.onclick = null;
+                opt.style.cursor = 'default';
+              });
+              
+              if (option === q.correctAnswer) {
+                feedback.innerText = "🎉 Correct!";
+                feedback.style.color = "#6bcb77";
+                div.style.background = "#6bcb77";
+              } else {
+                feedback.innerText = "❌ Wrong! Correct answer: " + q.correctAnswer;
+                feedback.style.color = "#ff6b6b";
+                div.style.background = "#ff6b6b";
+                // Highlight correct answer
+                optionsContainer.querySelectorAll('.option').forEach(opt => {
+                  if (opt.innerText === q.correctAnswer) {
+                    opt.style.background = "#6bcb77";
+                  }
+                });
+              }
+            };
+            optionsContainer.appendChild(div);
+          });
+
+          document.getElementById("quizModal").style.display = "flex";
+        }, 500);
+      } else {
+        requestAnimationFrame(animate);
+      }
+    }
+
+    function hideModal(event) {
+      if (event.target === event.currentTarget) {
+        document.getElementById("quizModal").style.display = "none";
+      }
+    }
+
+    // Initialize
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('load', resizeCanvas);
+    
+    // Initial draw
+    resizeCanvas();
+  </script>
+</body>
+</html>
